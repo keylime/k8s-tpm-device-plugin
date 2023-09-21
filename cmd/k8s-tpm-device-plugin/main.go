@@ -108,6 +108,18 @@ func main() {
 				Value:   false,
 				EnvVars: []string{"PASS_TPM2TOOLS_TCTI_ENV_VAR"},
 			},
+			&cli.StringFlag{
+				Name:    "mblog_mountpoint",
+				Usage:   "container path to mount the binary boot log onto",
+				Value:   "/", // default is just the root file system
+				EnvVars: []string{"MBLOG_MOUNTPOINT"},
+			},
+			&cli.StringFlag{
+				Name:    "imalog_mountpoint",
+				Usage:   "container path to mount the IMA log onto",
+				Value:   "/", // default is just the root file system
+				EnvVars: []string{"IMALOG_MOUNTPOINT"},
+			},
 		},
 		Action: func(ctx *cli.Context) error {
 			// initialize logger
@@ -164,11 +176,18 @@ func run(cliCtx *cli.Context, l *zap.Logger) error {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
-	p1, err := tpmrm.New(l, cliCtx.Uint("num-tpmrm-devices"), cliCtx.Bool("pass-tpm2tools-tcti-env-var"))
+	p1, err := tpmrm.New(l,
+	                     cliCtx.Uint("num-tpmrm-devices"),
+			     cliCtx.Bool("pass-tpm2tools-tcti-env-var"),
+			     cliCtx.String("mblog-mountpoint"),
+			     cliCtx.String("imalog-mountpoint"))
 	if err != nil {
 		return fmt.Errorf("tpmrm: device plugin create: %w", err)
 	}
-	p2, err := tpm.New(l, cliCtx.Bool("pass-tpm2tools-tcti-env-var"))
+	p2, err := tpm.New(l,
+	                   cliCtx.Bool("pass-tpm2tools-tcti-env-var"),
+			   cliCtx.String("mblog-mountpoint"),
+			   cliCtx.String("imalog-mountpoint"))
 	if err != nil {
 		return fmt.Errorf("tpm: device plugin create: %w", err)
 	}
