@@ -33,13 +33,13 @@ VERSION ?= $(shell git describe --tags --dirty)
 DOCKER_BUILDX_FLAGS ?=
 #DOCKER_PLATFORMS ?= linux/amd64,linux/arm64
 DOCKER_PLATFORMS ?= linux/amd64
-DOCKER_TAG ?= ghcr.io/githedgehog/k8s-tpm-device-plugin:$(VERSION)
+DOCKER_TAG ?= ghcr.io/keylime/k8s-tpm-device-plugin:$(VERSION)
 
 # helm chart version must be semver 2 compliant
 HELM_CHART_VERSION ?= $(shell echo $(VERSION) | sed 's/^v//')
 HELM_CHART_DIR := $(BUILD_DIR)/helm/k8s-tpm-device-plugin
 HELM_CHART_FILES := $(shell find $(HELM_CHART_DIR) -type f)
-HELM_CHART_REPO ?= ghcr.io/githedgehog/k8s-tpm-device-plugin/helm-charts
+HELM_CHART_REPO ?= ghcr.io/keylime/k8s-tpm-device-plugin/helm-charts
 
 ##@ General
 
@@ -105,7 +105,8 @@ test-cover: ## Runs golang unit tests and generates code coverage information
 ##@ Build
 
 .PHONY: docker-build
-docker-build: ## Builds the application in a docker container and creates a docker image
+docker-build:
+## Builds the application in a docker container and creates a docker image
 	docker buildx build \
 		-f $(MKFILE_DIR)/build/docker/k8s-tpm-device-plugin/Dockerfile \
 		-t $(DOCKER_TAG) \

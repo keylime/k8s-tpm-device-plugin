@@ -50,23 +50,27 @@ func UnimplementedError(str string) error {
 }
 
 type tpmrmDevicePlugin struct {
-	l          *zap.Logger
-	numDevices uint
-	tctiEnvVar bool
-	socketPath string
-	server     *grpc.Server
-	stopCh     chan struct{}
+	l                 *zap.Logger
+	numDevices        uint
+	tctiEnvVar        bool
+	mblog_mountpoint  string
+	imalog_mountpoint string
+	socketPath        string
+	server            *grpc.Server
+	stopCh            chan struct{}
 }
 
 var _ plugin.Interface = &tpmrmDevicePlugin{}
 var _ pluginapi.DevicePluginServer = &tpmrmDevicePlugin{}
 
-func New(l *zap.Logger, numDevices uint, tctiEnvVar bool) (plugin.Interface, error) {
+func New(l *zap.Logger, numDevices uint, tctiEnvVar bool, mblog_mountpoint string, imalog_mountpoint string) (plugin.Interface, error) {
 	return &tpmrmDevicePlugin{
-		l:          l.With(zap.String("plugin", "tpmrm")),
-		numDevices: numDevices,
-		tctiEnvVar: tctiEnvVar,
-		socketPath: filepath.Join(pluginapi.DevicePluginPath, tpmrmSocketName),
+		l:                 l.With(zap.String("plugin", "tpmrm")),
+		numDevices:        numDevices,
+		tctiEnvVar:        tctiEnvVar,
+		mblog_mountpoint:  mblog_mountpoint,
+		imalog_mountpoint: imalog_mountpoint,
+		socketPath:        filepath.Join(pluginapi.DevicePluginPath, tpmrmSocketName),
 		// will be initialized by Start()
 		server: nil,
 		stopCh: nil,
@@ -214,6 +218,18 @@ func (p *tpmrmDevicePlugin) Allocate(_ context.Context, allocateRequest *plugina
 					ContainerPath: "/dev/tpmrm0",
 					HostPath:      "/dev/tpmrm0",
 					Permissions:   "rwm",
+				},
+			},
+			Mounts: []*pluginapi.Mount{
+				{
+					ContainerPath: p.imalog_mountpoint + "/ascii_runtime_measurements",
+					HostPath: "/sys/kernel/security/ima/ascii_runtime_measurements",
+					ReadOnly: true,
+				},
+				{
+					ContainerPath: p.mblog_mountpoint +  "/binary_bios_measurements",
+					HostPath: "/sys/kernel/security/tpm0/binary_bios_measurements",
+					ReadOnly: true,
 				},
 			},
 		}
